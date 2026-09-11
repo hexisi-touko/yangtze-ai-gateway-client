@@ -1,0 +1,14 @@
+node_modules/
+dist/
+artifacts/
+output/
+runtime/
+dist-local-test/
+.playwright-cli/
+release-stage.json
+desktop.config.json
+desktop.config.local-test.json
+RELEASE-READINESS-*.md
+*.log
+.DS_Store
+Thumbs.db

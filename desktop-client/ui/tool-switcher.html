@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; img-src 'self' data:">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>长大计科智慧油田 - 终端管理</title>
+  <link rel="stylesheet" href="tool-switcher.css">
+</head>
+<body class="light-mode-theme">
+  <!-- 自定义白底无边框窗口顶栏：完全消除黑色系统边框，带专属图标、拖拽区与窗口控制按钮 -->
+  <header class="app-topbar">
+    <div class="topbar-drag-region">
+      <div class="topbar-brand">
+        <!-- 替换为你给的专属 长大实验室.svg 徽标 -->
+        <div class="brand-avatar-box">
+          <img src="assets/logo.svg" alt="长大实验室" class="brand-custom-logo">
+        </div>
+        <div class="brand-titles">
+          <h1 id="app-title" class="brand-title">长大计科智慧油田</h1>
+          <span class="brand-sub">AI 终端管理</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <!-- 浅色/深色主题切换按钮 (默认浅色白色) -->
+      <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="切换浅色 / 深色外观">
+        <span class="sun-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </span>
+        <span class="moon-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </span>
+        <span class="theme-text">浅色外观</span>
+      </button>
+
+      <!-- 服务网关状态指示 -->
+      <details class="gateway-details">
+        <summary class="gateway-pill" title="连接详情"><span class="gateway-dot"></span><span>连接</span></summary>
+        <div class="gateway-popover"><span class="form-label">服务地址</span><span id="server-url-display">http://127.0.0.1:3000</span></div>
+      </details>
+
+      <!-- 用户信息 -->
+      <div class="user-pill">
+        <div class="user-avatar-small" id="user-avatar">U</div>
+        <span id="user-name" class="user-name-text">用户</span>
+      </div>
+
+      <button id="refresh" class="btn-topbar-action" type="button" title="同步配置与刷新">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+          <path d="M21 21v-5h-5"/>
+        </svg>
+      </button>
+
+      <button id="open-harness" class="btn-workbench" type="button" title="打开编程工作台">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m8 9-4 3 4 3"/><path d="m16 9 4 3-4 3"/><path d="m14 5-4 14"/>
+        </svg>
+        <span>编程工作台</span>
+        <span id="harness-status-dot" class="harness-status-dot" aria-label="Harness 状态"></span>
+      </button>
+
+      <button id="logout" class="btn-topbar-action btn-logout" type="button" title="退出账号">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+
+      <!-- Windows 窗口原生控制按钮组 (最小化、最大化、关闭) -->
+      <div class="window-control-buttons">
+        <button id="win-min-btn" class="win-btn" type="button" title="最小化">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button id="win-max-btn" class="win-btn" type="button" title="最大化">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
+        </button>
+        <button id="win-close-btn" class="win-btn win-btn-close" type="button" title="关闭">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 提示条 (Toast / Notification) -->
+  <div id="message" class="message-banner" role="status"></div>
+
+  <!-- 主内容区：不分区！像 cc-switch 原版一样整齐排列各个 Agent 的单账号卡片！ -->
+  <main class="content-body">
+    <div class="list-heading-row">
+      <div class="list-title">AI 终端</div>
+      <div class="list-heading-actions">
+        <div id="terminal-count" class="list-subtitle">已绑定账号</div>
+        <button id="harness-status" class="harness-status-button" type="button" title="检查编程工作台状态">
+          <span class="harness-status-dot"></span><span>Harness 未检查</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 供应商卡片列表 (codex, claude code 等原版风格卡片列表) -->
+    <div id="provider-cards-list" class="cards-list">
+      <!-- 卡片将由 JS 动态渲染 -->
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       供应商配置详情弹窗 (Modal)
+       100% 严格对齐用户提供的两张表单截图！带顶部居中圆角大Logo，包含所有输入框，全只读防篡改
+       ========================================================================= -->
+  <div id="config-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-dialog-title" aria-hidden="true" inert>
+    <div class="modal-dialog">
+      <!-- 弹窗顶栏：左侧带返回箭头，居中标题"添加新供应商 / 供应商配置"，右侧关闭按钮 -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <button id="modal-back-btn" class="modal-back-btn" type="button" title="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+          </button>
+          <span class="modal-title-text" id="modal-dialog-title">供应商配置</span>
+          <span class="modal-badge-readonly">管理端配置</span>
+        </div>
+        <button id="modal-close-btn" class="modal-close-btn" type="button" title="关闭">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="config-tabs" role="tablist" aria-label="供应商配置">
+        <button id="tab-connection" class="config-tab" role="tab" aria-selected="true" aria-controls="panel-connection" type="button" data-tab="connection">连接</button>
+        <button id="tab-models" class="config-tab" role="tab" aria-selected="false" aria-controls="panel-models" tabindex="-1" type="button" data-tab="models">模型</button>
+        <button id="tab-advanced" class="config-tab" role="tab" aria-selected="false" aria-controls="panel-advanced" tabindex="-1" type="button" data-tab="advanced">高级</button>
+      </div>
+      <!-- 弹窗滚动主体 -->
+      <div class="modal-body">
+        <!-- 顶部居中大图标 (cc-switch 原版 BasicFormFields 结构) -->
+        <div class="modal-icon-center-wrap">
+          <div class="modal-big-icon-box" id="modal-big-icon-box">
+            <!-- 动态放置 OpenAI / Claude 官方图标 -->
+          </div>
+        </div>
+
+        <!-- 供应商名称 与 备注 (截图二第1行) -->
+        <div class="form-row form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="modal-provider-name">供应商名称</label>
+            <input class="form-input readonly-input" id="modal-provider-name" type="text" value="OpenAI Official" readonly tabindex="-1">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-provider-note">备注</label>
+            <input class="form-input readonly-input" id="modal-provider-note" type="text" value="例如：公司专用账号" readonly tabindex="-1">
+          </div>
+        </div>
+
+        <!-- 官网链接 (截图二第2行) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="modal-provider-website">官网链接</label>
+            <input class="form-input readonly-input" id="modal-provider-website" type="text" value="http://127.0.0.1:3000" readonly tabindex="-1">
+          </div>
+        </div>
+
+        <!-- API Key (截图二第3行，默认明文显示，支持一键复制与切换隐匿) -->
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label" for="modal-provider-key">API Key</label>
+              <div class="label-actions-right">
+                <button id="modal-toggle-eye" class="action-text-link" type="button">
+                  <svg id="modal-eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <span id="modal-eye-text">隐藏</span>
+                </button>
+                <button id="modal-copy-key" class="action-text-link" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  <span>复制</span>
+                </button>
+              </div>
+            </div>
+            <input class="form-input readonly-input font-mono" id="modal-provider-key" type="text" value="" placeholder="只需要填这里，下方 auth.json 会自动填充" readonly tabindex="-1">
+          </div>
+        </div>
+
+        <!-- API 请求地址 (截图二第4行，带"完整 URL"开关 + 测速 + 黄色提示) -->
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label" for="modal-provider-url">API 请求地址</label>
+              <div class="url-switch-group">
+                <span class="url-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                  </svg>
+                </span>
+                <span class="url-switch-label">完整 URL</span>
+                <span class="switch-pill checked"></span>
+                <button id="modal-btn-speedtest" class="btn-text-speedtest" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                  <span>管理与测速</span>
+                </button>
+              </div>
+            </div>
+            <div class="input-with-copy-box">
+              <input class="form-input readonly-input font-mono" id="modal-provider-url" type="text" value="" readonly tabindex="-1">
+              <button id="modal-copy-url" class="btn-inside-copy" type="button" title="复制服务端点">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+            <!-- 黄色提示框 (截图二原版) -->
+          </div>
+        </div>
+
+        <!-- 默认模型 (截图三第1项，带内置下载/预设按钮及说明) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="modal-provider-model">默认模型</label>
+            <div class="input-with-icon-box">
+              <select class="form-input font-mono" id="modal-provider-model" aria-label="默认模型"></select>
+              <div class="input-trailing-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 高级选项面板 (截图三第2项折叠卡片) -->
+        <div class="advanced-card">
+          <div class="advanced-card-header">
+            <svg class="chevron-down-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+            <span class="advanced-card-title">高级选项</span>
+          </div>
+
+          <div class="advanced-card-content">
+            <!-- 上游格式 -->
+            <div class="form-group">
+              <label class="form-label" for="modal-upstream-format">上游格式</label>
+              <div class="select-wrapper">
+                <input class="form-input readonly-input" id="modal-upstream-format" type="text" value="Responses" readonly tabindex="-1">
+                <svg class="select-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div class="field-hint">
+                协议适配由管理端渠道配置。
+              </div>
+            </div>
+
+            <!-- 模型映射 -->
+            <div class="form-group" style="margin-top: 16px;">
+              <div class="mapping-title-row">
+                <label class="form-label" style="margin-bottom: 0;">模型列表</label>
+                <div class="mapping-actions-btns">
+                  <button id="modal-fetch-models" class="btn-mapping-action" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>获取模型列表</span>
+                  </button>
+                </div>
+              </div>
+              <input id="modal-model-search" class="form-input" type="search" placeholder="搜索模型" aria-label="搜索模型">
+              <p id="modal-model-status" class="field-hint" role="status" aria-live="polite"></p>
+
+              <!-- 映射列表预览 -->
+              <div class="mapping-preview-box" aria-label="可选模型"></div>
+            </div>
+
+            <!-- 自定义 User-Agent (新增截图 1:1 复刻) -->
+            <div class="form-group" style="margin-top: 16px;">
+              <label class="form-label" for="modal-custom-ua">自定义 User-Agent</label>
+              <div class="input-with-icon-box">
+                <input class="form-input readonly-input font-mono" id="modal-custom-ua" type="text" value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36" readonly tabindex="-1">
+                <div class="input-trailing-icon" style="pointer-events: auto; cursor: default;">
+                  <span class="preset-tag-text">预设 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px; display: inline;"><polyline points="6 9 12 15 18 9"/></svg></span>
+                </div>
+              </div>
+              <div class="field-hint">仅在开启本地路由/代理接管后生效，会替换转发到供应商 API 请求中的 User-Agent。</div>
+            </div>
+
+            <!-- 本地代理请求覆盖 (新增截图 1:1 复刻) -->
+            <div class="form-group" style="margin-top: 16px;">
+              <label class="form-label">本地代理请求覆盖</label>
+              <div class="field-hint" style="margin-top: -2px; margin-bottom: 6px;">仅在本地路由/代理接管后生效，应用于协议转换后的上游请求。</div>
+              <div class="form-grid-2">
+                <div>
+                  <div class="sub-label-text">Header 覆盖</div>
+                  <textarea class="code-textarea readonly-input font-mono" readonly tabindex="-1">{
+  "X-Provider": "custom"
+}</textarea>
+                </div>
+                <div>
+                  <div class="sub-label-text">Body 覆盖</div>
+                  <textarea class="code-textarea readonly-input font-mono" readonly tabindex="-1">{
+  "temperature": 0.2
+}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- auth.json (JSON) * (新增截图二 1:1 复刻代码框) -->
+        <div class="form-row" style="margin-top: 12px;">
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label">auth.json (JSON) *</label>
+              <span class="format-action-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;display:inline;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 格式化</span>
+            </div>
+            <textarea id="modal-auth-json" class="code-textarea code-box-auth readonly-input font-mono" readonly tabindex="-1">{\n  "OPENAI_API_KEY": "sk-your-api-key-here"\n}</textarea>
+            <div class="field-hint">Codex auth.json 配置内容</div>
+          </div>
+        </div>
+
+        <!-- config.toml (TOML) (新增截图二 1:1 复刻代码框与复选框) -->
+        <div class="form-row" style="margin-top: 12px;">
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label">config.toml (TOML)</label>
+              <div class="toml-options-row">
+                <label class="checkbox-label"><input type="checkbox" disabled> 启用远程压缩</label>
+                <label class="checkbox-label"><input type="checkbox" disabled> 应用通用配置</label>
+                <span class="link-span-text">编辑通用配置</span>
+              </div>
+            </div>
+            <div class="compress-threshold-row">
+              <label class="checkbox-label"><input type="checkbox" disabled> 1M 上下文窗口</label>
+              <span class="compress-label">压缩阈值:</span>
+              <input class="compress-input font-mono readonly-input" type="text" value="900000" readonly tabindex="-1">
+            </div>
+            <textarea id="modal-config-toml" class="code-textarea code-box-toml readonly-input font-mono" readonly tabindex="-1">model_provider = "yangtzeapi"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+disable_response_storage = true
+
+[model_providers.yangtzeapi]
+name = "yangtzeapi"
+base_url = "http://127.0.0.1:3000/v1"
+wire_api = "responses"
+requires_openai_auth = false
+experimental_bearer_token = "sk-your-api-key-here"</textarea>
+            <div class="field-hint">Codex config.toml 配置内容</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 弹窗底栏 -->
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          <span class="readonly-status-tag">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span id="modal-config-status">管理端预分配</span>
+          </span>
+        </div>
+        <div class="modal-footer-right">
+          <button id="modal-btn-close" class="btn-modal-close" type="button">关闭</button>
+          <button id="modal-apply-models" class="btn-primary-blue" type="button">应用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="tool-switcher-preview.js"></script>
+  <script src="tool-switcher.js"></script>
+</body>
+</html>
