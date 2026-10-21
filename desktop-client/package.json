@@ -1,6 +1,6 @@
 {
   "name": "api-relay-desktop-client",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "private": true,
   "author": "API Relay Operator",
   "description": "Configurable Windows desktop client for New API authentication and registration review",
