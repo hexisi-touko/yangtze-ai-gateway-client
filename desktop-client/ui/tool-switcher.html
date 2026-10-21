@@ -50,7 +50,7 @@
       <!-- 服务网关状态指示 -->
       <details class="gateway-details">
         <summary class="gateway-pill" title="连接详情"><span class="gateway-dot"></span><span>连接</span></summary>
-        <div class="gateway-popover"><span class="form-label">服务地址</span><span id="server-url-display">http://127.0.0.1:3000</span></div>
+        <div class="gateway-popover"><span class="form-label">服务地址</span><span id="server-url-display">未连接</span></div>
       </details>
 
       <!-- 用户信息 -->
@@ -122,7 +122,7 @@
 
   <!-- =========================================================================
        供应商配置详情弹窗 (Modal)
-       100% 严格对齐用户提供的两张表单截图！带顶部居中圆角大Logo，包含所有输入框，全只读防篡改
+       供应商配置弹窗
        ========================================================================= -->
   <div id="config-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-dialog-title" aria-hidden="true" inert>
     <div class="modal-dialog">
@@ -160,7 +160,7 @@
           </div>
         </div>
 
-        <!-- 供应商名称 与 备注 (截图二第1行) -->
+        <!-- 供应商名称与备注 -->
         <div class="form-row form-grid-2">
           <div class="form-group">
             <label class="form-label" for="modal-provider-name">供应商名称</label>
@@ -173,15 +173,15 @@
           </div>
         </div>
 
-        <!-- 官网链接 (截图二第2行) -->
+        <!-- 官网链接 -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="modal-provider-website">官网链接</label>
-            <input class="form-input readonly-input" id="modal-provider-website" type="text" value="http://127.0.0.1:3000" readonly tabindex="-1">
+            <input class="form-input readonly-input" id="modal-provider-website" type="text" value="未配置" readonly tabindex="-1">
           </div>
         </div>
 
-        <!-- API Key (截图二第3行，默认明文显示，支持一键复制与切换隐匿) -->
+        <!-- API Key -->
         <div class="form-row">
           <div class="form-group">
             <div class="form-label-row">
@@ -207,7 +207,7 @@
           </div>
         </div>
 
-        <!-- API 请求地址 (截图二第4行，带"完整 URL"开关 + 测速 + 黄色提示) -->
+        <!-- API 请求地址 -->
         <div class="form-row">
           <div class="form-group">
             <div class="form-label-row">
@@ -238,11 +238,10 @@
                 </svg>
               </button>
             </div>
-            <!-- 黄色提示框 (截图二原版) -->
           </div>
         </div>
 
-        <!-- 默认模型 (截图三第1项，带内置下载/预设按钮及说明) -->
+        <!-- 默认模型 -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="modal-provider-model">默认模型</label>
@@ -259,7 +258,7 @@
           </div>
         </div>
 
-        <!-- 高级选项面板 (截图三第2项折叠卡片) -->
+        <!-- 高级选项面板 -->
         <div class="advanced-card">
           <div class="advanced-card-header">
             <svg class="chevron-down-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -305,7 +304,7 @@
               <div class="mapping-preview-box" aria-label="可选模型"></div>
             </div>
 
-            <!-- 自定义 User-Agent (新增截图 1:1 复刻) -->
+            <!-- 自定义 User-Agent -->
             <div class="form-group" style="margin-top: 16px;">
               <label class="form-label" for="modal-custom-ua">自定义 User-Agent</label>
               <div class="input-with-icon-box">
@@ -317,7 +316,7 @@
               <div class="field-hint">仅在开启本地路由/代理接管后生效，会替换转发到供应商 API 请求中的 User-Agent。</div>
             </div>
 
-            <!-- 本地代理请求覆盖 (新增截图 1:1 复刻) -->
+            <!-- 本地代理请求覆盖 -->
             <div class="form-group" style="margin-top: 16px;">
               <label class="form-label">本地代理请求覆盖</label>
               <div class="field-hint" style="margin-top: -2px; margin-bottom: 6px;">仅在本地路由/代理接管后生效，应用于协议转换后的上游请求。</div>
@@ -339,19 +338,19 @@
           </div>
         </div>
 
-        <!-- auth.json (JSON) * (新增截图二 1:1 复刻代码框) -->
+        <!-- auth.json (JSON) -->
         <div class="form-row" style="margin-top: 12px;">
           <div class="form-group">
             <div class="form-label-row">
               <label class="form-label">auth.json (JSON) *</label>
               <span class="format-action-text"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;display:inline;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 格式化</span>
             </div>
-            <textarea id="modal-auth-json" class="code-textarea code-box-auth readonly-input font-mono" readonly tabindex="-1">{\n  "OPENAI_API_KEY": "sk-your-api-key-here"\n}</textarea>
+            <textarea id="modal-auth-json" class="code-textarea code-box-auth readonly-input font-mono" readonly tabindex="-1">{\n  "OPENAI_API_KEY": "your-api-key"\n}</textarea>
             <div class="field-hint">Codex auth.json 配置内容</div>
           </div>
         </div>
 
-        <!-- config.toml (TOML) (新增截图二 1:1 复刻代码框与复选框) -->
+        <!-- config.toml (TOML) -->
         <div class="form-row" style="margin-top: 12px;">
           <div class="form-group">
             <div class="form-label-row">
@@ -374,7 +373,7 @@ disable_response_storage = true
 
 [model_providers.yangtzeapi]
 name = "yangtzeapi"
-base_url = "http://127.0.0.1:3000/v1"
+base_url = "https://your-gateway.example.com/v1"
 wire_api = "responses"
 requires_openai_auth = false
 experimental_bearer_token = "sk-your-api-key-here"</textarea>
@@ -399,7 +398,6 @@ experimental_bearer_token = "sk-your-api-key-here"</textarea>
     </div>
   </div>
 
-  <script src="tool-switcher-preview.js"></script>
   <script src="tool-switcher.js"></script>
 </body>
 </html>

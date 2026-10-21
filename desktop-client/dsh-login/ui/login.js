@@ -61,6 +61,23 @@ const authAdapter = {
 }
 
 const message = document.querySelector('#form-message')
+const loginProgress = document.querySelector('.login-progress')
+const loginProgressBar = document.querySelector('.login-progress-bar')
+const loginProgressText = loginProgress?.querySelector('span:last-child')
+let loginProgressValue = 0
+let loginProgressTarget = 0
+let loginProgressTimer = null
+function updateLoginProgress(percent, label) {
+  loginProgressTarget = Math.max(0, Math.min(100, Number(percent) || 0))
+  if (loginProgressText && label) loginProgressText.textContent = label
+  if (loginProgressTimer) return
+  loginProgressTimer = window.setInterval(() => {
+    if (loginProgressValue < loginProgressTarget) loginProgressValue = Math.min(loginProgressTarget, loginProgressValue + 1)
+    if (loginProgressBar) loginProgressBar.style.width = `${loginProgressValue}%`
+    if (loginProgressValue >= loginProgressTarget && loginProgressTarget >= 100) { window.clearInterval(loginProgressTimer); loginProgressTimer = null }
+  }, 120)
+}
+if (window.desktopAuth?.onLoginProgress) window.desktopAuth.onLoginProgress(({ percent = 0, label = '正在登录…' } = {}) => updateLoginProgress(percent, label))
 const views = Array.from(document.querySelectorAll('.auth-view'))
 const brandLogo = document.querySelector('#brand-logo')
 const brandLogoImage = document.querySelector('#brand-logo-image')
@@ -237,6 +254,13 @@ async function refreshPasswordResetState() {
 }
 
 function setBusy(form, busy) {
+  form.classList.toggle('is-loading', busy)
+  if (form.id === 'login-form' && !busy && loginProgressTimer) { window.clearInterval(loginProgressTimer); loginProgressTimer = null }
+  if (form.id === 'login-form' && busy) {
+    loginProgressValue = 0
+    loginProgressTarget = 5
+    updateLoginProgress(5, '正在校验登录信息…')
+  }
   form.querySelectorAll('button, input, textarea').forEach((element) => { element.disabled = busy })
 }
 

@@ -5,6 +5,9 @@ output/
 runtime/
 dist-local-test/
 .playwright-cli/
+.dsh-home/
+tmp-dsh-home-test/
+tmp-harness-manager-home/
 release-stage.json
 desktop.config.json
 desktop.config.local-test.json

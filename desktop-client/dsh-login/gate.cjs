@@ -7,20 +7,33 @@ const { CredentialStore } = require('./src/credential-store')
 const { RegistrationStore } = require('./src/registration-store')
 
 const { pathToFileURL } = require('node:url');
-const desktopConfig = loadDesktopConfig('desktop.config.local-test.json');
+const desktopConfig = loadDesktopConfig('desktop.config.json');
 const LOGIN_WINDOW_WIDTH = 420, LOGIN_WINDOW_HEIGHT = 620;
 let loginWindow, apiSession, apiClient, passwordResetStore, credentialStore, registrationStore;
 let pendingTwoFactor = null, pendingRegistration = null, currentAccount = null;
 let enterHarness;
+function reportProgress(percent, label) {
+ if (loginWindow && !loginWindow.isDestroyed()) loginWindow.webContents.send('auth:login-progress', {percent, label});
+}
 function requireLoginPage(event) {
  const expected = pathToFileURL(path.join(__dirname, 'ui/login.html')).href;
  if (!loginWindow || loginWindow.isDestroyed() || event.sender !== loginWindow.webContents || event.senderFrame !== loginWindow.webContents.mainFrame || event.senderFrame.url.split('?')[0] !== expected) throw new Error('Unauthorized window request');
 }
-function publicError(error, fallback) { return {success:false,message:error instanceof NewApiClientError ? error.message : fallback,code:error.code || 'CLIENT_ERROR'}; }
+function publicError(error, fallback) {
+ const rawMessage = error instanceof NewApiClientError ? error.message : error?.message;
+ const message = typeof rawMessage === 'string' && rawMessage.trim()
+  ? rawMessage.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 300)
+  : fallback;
+ const code = typeof error?.code === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(error.code)
+  ? error.code
+  : 'CLIENT_ERROR';
+ return {success:false,message,code};
+}
 async function openUserWindow() {
  const self = await apiClient.getSelf();
  if (!self || !Number.isSafeInteger(self.id) || self.id <= 0 || self.role !== 1) throw new NewApiClientError('无法验证当前成员账号');
  await enterHarness({id:self.id,serverUrl:desktopConfig.serverUrl,apiClient});
+ reportProgress(100, '登录完成');
  if (loginWindow && !loginWindow.isDestroyed()) loginWindow.destroy();
 }
 function updateSavedCredentials(credentials) {
@@ -134,7 +147,9 @@ ipcMain.handle('auth:status', async (event) => {
     requireLoginPage(event)
     pendingTwoFactor = null
     try {
+      reportProgress(15, '正在连接服务…')
       const result = await apiClient.login(credentials || {})
+      reportProgress(55, result.requiresTwoFactor ? '等待两步验证…' : '账号验证成功，正在初始化会话…')
       if (result.requiresTwoFactor) {
         pendingTwoFactor = {
           flowToken: result.flowToken,
@@ -148,11 +163,13 @@ ipcMain.handle('auth:status', async (event) => {
         return { success: true, requiresTwoFactor: true, message: result.message }
       }
       await requireMemberAccount(result)
+      reportProgress(75, '正在加载用户配置…')
       updateSavedCredentials(credentials)
       if (registrationStore.load()?.username === String(credentials?.username || '').trim()) registrationStore.clear()
       pendingRegistration = null
       currentAccount = { username: credentials?.username || '' }
       await openUserWindow()
+      reportProgress(100, '登录完成')
       return { success: true, authenticated: true, message: result.message }
     } catch (error) {
       return publicError(error, '登录失败')
@@ -171,11 +188,13 @@ ipcMain.handle('auth:status', async (event) => {
       const credentials = pendingTwoFactor.credentials
       pendingTwoFactor = null
       await requireMemberAccount(result)
+      reportProgress(75, '正在加载用户配置…')
       updateSavedCredentials(credentials)
       if (registrationStore.load()?.username === String(credentials?.username || '').trim()) registrationStore.clear()
       pendingRegistration = null
       currentAccount = { username: credentials?.username || '' }
       await openUserWindow()
+      reportProgress(100, '登录完成')
       return { success: true, authenticated: true, message: result.message }
     } catch (error) {
       return publicError(error, '两步验证失败')

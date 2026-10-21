@@ -30,7 +30,12 @@ function requireReason(value) {
 
 function responseMessage(payload, fallback) {
   if (typeof payload?.message === 'string' && payload.message.trim()) {
-    return payload.message.trim().slice(0, 300)
+    const message = payload.message.trim().slice(0, 300)
+    const translations = {
+      'Username or password is incorrect, or user has been banned': '用户名或密码错误，或账号已被禁用',
+      'Invalid parameters': '登录参数无效，请检查账号和密码',
+    }
+    return translations[message] || message
   }
   return fallback
 }
@@ -41,6 +46,59 @@ function applicationStatus(value) {
     throw new NewApiClientError('服务器返回了未知的审核状态', { code: 'INVALID_RESPONSE' })
   }
   return status
+}
+
+function normalizeCurrentUser(data) {
+  if (!data || typeof data !== 'object') return null
+  const result = {}
+  for (const field of ['id', 'username', 'role', 'group', 'quota', 'used_quota', 'request_count']) {
+    if (data[field] !== undefined && data[field] !== null) result[field] = data[field]
+  }
+  return result
+}
+
+function normalizeUsageRows(rows) {
+  return rows.map((row) => {
+    const normalized = {
+      model: typeof row?.model === 'string' ? row.model : 'unknown',
+      prompt_tokens: Number(row?.prompt_tokens) || 0,
+      completion_tokens: Number(row?.completion_tokens) || 0,
+      requests: Number(row?.requests) || 0,
+    }
+    for (const field of ['cost', 'estimated_cost_usd', 'estimated_cost', 'cost_usd', 'quota']) {
+      if (row?.[field] !== undefined && row?.[field] !== null && Number.isFinite(Number(row[field]))) {
+        normalized[field] = Number(row[field])
+      }
+    }
+    return normalized
+  })
+}
+
+function normalizeUserLogs(rows) {
+  return rows.map((row) => {
+    const normalized = {
+      id: row?.id ?? null,
+      created_at: Number(row?.created_at || row?.createdAt) || 0,
+      model_name: typeof row?.model_name === 'string' ? row.model_name : (typeof row?.model === 'string' ? row.model : 'unknown'),
+      type: Number(row?.type) || 0,
+      quota: Number(row?.quota) || 0,
+      prompt_tokens: Number(row?.prompt_tokens) || 0,
+      completion_tokens: Number(row?.completion_tokens) || 0,
+      content: typeof row?.content === 'string' ? row.content.slice(0, 240) : '',
+    }
+    if (typeof row?.error === 'string') normalized.error = row.error.slice(0, 240)
+    if (typeof row?.error_code === 'string') normalized.error_code = row.error_code.slice(0, 80)
+    if (Number.isFinite(Number(row?.status_code))) normalized.status_code = Number(row.status_code)
+    if (typeof row?.other === 'string') normalized.other = row.other.slice(0, 1200)
+    else if (row?.other && typeof row.other === 'object') {
+      const safeOther = {}
+      for (const field of ['status', 'status_code', 'error', 'error_code', 'stream_status', 'request_path']) {
+        if (row.other[field] !== undefined && row.other[field] !== null) safeOther[field] = row.other[field]
+      }
+      if (Object.keys(safeOther).length) normalized.other = safeOther
+    }
+    return normalized
+  })
 }
 
 function authenticatedAccountRole(payload) {
@@ -284,7 +342,7 @@ class NewApiClient {
   async getSelf() {
     try {
       const payload = await this.request('/api/user/self')
-      return payload?.data || null
+      return normalizeCurrentUser(payload?.data)
     } catch {
       return null
     }
@@ -329,7 +387,44 @@ class NewApiClient {
       .filter((id) => typeof id === 'string' && id.length > 0 && id.length <= 256 && !/[\s\x00-\x1f]/.test(id)))]
   }
 
-  async getUserUsageByModel(range={}){const p=await this.request('/api/log/self/usage',{query:{start_timestamp:range.startTimestamp||0,end_timestamp:range.endTimestamp||0}});if(!Array.isArray(p.data))throw Error('服务端尚未启用用量接口');return p.data;}  async getDesktopTools() {
+  async getUserUsageByModel(range = {}) {
+    try {
+      const p = await this.request('/api/log/self/usage', {
+        query: {
+          start_timestamp: range.startTimestamp || 0,
+          end_timestamp: range.endTimestamp || 0,
+        },
+      })
+      if (!Array.isArray(p.data)) throw new Error('服务器返回的用量数据格式无效')
+      return { available: true, rows: normalizeUsageRows(p.data) }
+    } catch (error) {
+      if (error?.status === 404) {
+        return { available: false, rows: [], message: '当前服务器暂未提供用量统计功能' }
+      }
+      throw error
+    }
+  }
+
+  async getUserLogs(range = {}) {
+    try {
+      const payload = await this.request('/api/log/self', {
+        query: {
+          p: 1,
+          page_size: range.pageSize || 20,
+          start_timestamp: range.startTimestamp || 0,
+          end_timestamp: range.endTimestamp || 0,
+        },
+      })
+      const data = payload?.data
+      const rows = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : [])
+      return { available: true, rows: normalizeUserLogs(rows) }
+    } catch (error) {
+      if (error?.status === 404) return { available: false, rows: [], message: '当前服务器暂未提供请求日志功能' }
+      throw error
+    }
+  }
+
+  async getDesktopTools() {
     try {
       const payload = await this.request(this.config.apiPaths.desktopTools)
       const data = payload?.data && typeof payload.data === 'object' ? payload.data : payload
@@ -350,7 +445,7 @@ class NewApiClient {
     let models = []
     try { models = await this.getAvailableModels(apiKey) } catch { /* Keep configuration visible when discovery is unavailable. */ }
 
-    const serverUrl = this.config.serverUrl || 'http://127.0.0.1:3000'
+    const serverUrl = this.config.serverUrl || 'http://154.9.232.102:3000'
     const codexModel = models[0] || 'gpt-5.6-luna'
     const claudeModel = models.find((m) => /^claude/i.test(m)) || 'claude-sonnet-4-20250514'
 
@@ -383,4 +478,6 @@ class NewApiClient {
 module.exports = {
   NewApiClient,
   NewApiClientError,
+  normalizeCurrentUser,
+  normalizeUsageRows,
 }

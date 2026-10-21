@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, safeStorage, session, shell } = require('electron')
+const { app, BrowserWindow, Menu, clipboard, dialog, ipcMain, safeStorage, session, shell } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 const { loadDesktopConfig, logoPathForLoginPage } = require('./src/config')
@@ -14,7 +14,7 @@ const { HarnessManager } = require('./src/harness-manager')
 const { HarnessTask } = require('./src/harness-task')
 const { createDesktopToolsCache } = require('./src/desktop-tools-cache')
 
-const diagnosticLogPath = path.join(process.env.TEMP || process.env.TMP || '.', 'api-client-local-test-main.log')
+const diagnosticLogPath = path.join(process.env.TEMP || process.env.TMP || '.', 'api-client-main.log')
 function diagnosticLog(message, details) {
   try {
     const suffix = details === undefined ? '' : ` ${JSON.stringify(details)}`
@@ -49,6 +49,11 @@ let desktopToolsCache = null
 let harnessWindow = null
 let harnessStartPromise = null
 let startupProgressWindow = null
+
+function accountScope(account = currentAccount) {
+  const identity = account?.id || account?.username
+  return identity ? `${desktopConfig.serverUrl}:${identity}` : ''
+}
 
 async function showStartupProgress(stage, percent) {
   const text = { login: '正在验证账号', service: '正在启动本地工作台', page: '正在加载工作台页面', sync: '正在同步配置' }[stage] || '正在准备工作台'
@@ -596,26 +601,26 @@ function registerIpcHandlers() {
   ipcMain.handle('desktop-tools:get-state', async (event) => {
     requireToolSwitcherPage(event)
     try {
-      const cached = desktopToolsCache?.readFresh()
+      const cached = desktopToolsCache?.readFresh(accountScope())
       // Cached configuration is sufficient to paint the window immediately.
       // Account metadata is refreshed separately and must not block first paint.
       if (cached) {
-        toolSyncManager.setAccountScope(`${desktopConfig.serverUrl}:${currentAccount?.id || currentAccount?.username || 'cached'}`, currentAccount?.username)
+        toolSyncManager.setAccountScope(accountScope(), currentAccount?.username)
         toolSyncManager.setServerConfigs(cached.tools)
         void Promise.all([apiClient.getSelf(), apiClient.getDesktopTools()]).then(([self, fresh]) => {
           currentAccount = self || currentAccount
           if (fresh?.tools) {
-            desktopToolsCache?.write(fresh)
-            toolSyncManager.setAccountScope(`${desktopConfig.serverUrl}:${self?.id || currentAccount?.username}`, currentAccount?.username)
+            desktopToolsCache?.write(fresh, accountScope(self || currentAccount))
+            toolSyncManager.setAccountScope(accountScope(self || currentAccount), currentAccount?.username)
             toolSyncManager.setServerConfigs(fresh.tools)
           }
         }).catch(() => {})
         return { success: true, tools: toolSyncManager.getState(), account: currentAccount, serverUrl: desktopConfig.serverUrl, productName: desktopConfig.productName, cached: true }
       }
       const [result, self] = await Promise.all([apiClient.getDesktopTools(), apiClient.getSelf()])
-      if (!cached) desktopToolsCache?.write(result)
       currentAccount = self || currentAccount
-      toolSyncManager.setAccountScope(`${desktopConfig.serverUrl}:${self?.id || currentAccount?.username}`, currentAccount?.username)
+      desktopToolsCache?.write(result, accountScope())
+      toolSyncManager.setAccountScope(accountScope(), currentAccount?.username)
       toolSyncManager.setServerConfigs(result.tools)
       return {
         success: true,
@@ -633,9 +638,9 @@ function registerIpcHandlers() {
     requireToolSwitcherPage(event)
     try {
       const [result, self] = await Promise.all([apiClient.getDesktopTools(), apiClient.getSelf()])
-      desktopToolsCache?.write(result)
       currentAccount = self || currentAccount
-      toolSyncManager.setAccountScope(`${desktopConfig.serverUrl}:${self?.id || currentAccount?.username}`, currentAccount?.username)
+      desktopToolsCache?.write(result, accountScope())
+      toolSyncManager.setAccountScope(accountScope(), currentAccount?.username)
       toolSyncManager.setServerConfigs(result.tools)
       return {
         success: true,
@@ -696,6 +701,16 @@ function registerIpcHandlers() {
       }
     } catch (error) {
       return publicError(error, '启动工具失败')
+    }
+  })
+
+  ipcMain.handle('desktop-tools:copy-api-key', (event, toolId) => {
+    requireToolSwitcherPage(event)
+    try {
+      clipboard.writeText(toolSyncManager.getApiKeyForTool(toolId))
+      return { success: true, message: 'API Key 已复制到剪贴板' }
+    } catch (error) {
+      return publicError(error, '复制 API Key 失败')
     }
   })
 
@@ -851,6 +866,7 @@ function registerIpcHandlers() {
     requireToolSwitcherPage(event)
     try {
       await apiSession.clearStorageData({ origin: desktopConfig.serverUrl })
+      desktopToolsCache?.clear()
       toolSyncManager.setServerConfigs([])
       currentAccount = null
       apiClient.accessToken = null

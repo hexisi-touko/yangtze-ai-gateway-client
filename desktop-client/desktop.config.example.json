@@ -1,0 +1,11 @@
+{
+  "productName": "Yangtze AI Gateway Client",
+  "artifactBaseName": "Yangtze-AI-Gateway-Client",
+  "appId": "cn.yangtze.gateway.client",
+  "sessionPartition": "persist:yangtze-api-user",
+  "logoPath": "ui/assets/logo.svg",
+  "appIconPath": "build/icon.ico",
+  "serverUrl": "http://gateway.example.com",
+  "userPagePath": "/dashboard",
+  "allowInsecureHttp": true
+}

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>更新日志</title>
+  <style>
+    :root { color-scheme: light; font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f5f7fb; color: #1f2937; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 640px; background: linear-gradient(135deg, #f8fbff 0%, #f4f6fa 100%); }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 24px 30px 18px; border-bottom: 1px solid #e5eaf2; background: rgba(255,255,255,.92); }
+    h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .02em; }
+    .subtitle { margin: 7px 0 0; color: #6b7280; font-size: 13px; }
+    button { border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #334155; padding: 8px 14px; cursor: pointer; font: inherit; }
+    button:hover { border-color: #2563eb; color: #1d4ed8; }
+    button:disabled { opacity: .55; cursor: wait; }
+    main { padding: 22px 30px 30px; }
+    #status { color: #64748b; font-size: 14px; padding: 22px 0; }
+    #status.error { color: #b91c1c; }
+    .release { padding: 20px 0 22px; border-bottom: 1px solid #e5eaf2; }
+    .release:last-child { border-bottom: 0; }
+    .release-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .version { color: #0f3d7a; font-size: 18px; font-weight: 700; }
+    .date { color: #7c8799; font-size: 12px; }
+    .badge { padding: 3px 7px; border-radius: 4px; background: #fff0f0; color: #b42318; font-size: 12px; }
+    .notes { margin: 12px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #374151; line-height: 1.7; font-size: 14px; }
+    .empty { padding: 30px 0; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>更新日志</h1>
+      <p class="subtitle">查看已发布的客户端版本与更新内容</p>
+    </div>
+    <button id="refresh" type="button">刷新</button>
+  </header>
+  <main>
+    <div id="status">正在加载更新日志…</div>
+    <section id="releases" aria-live="polite"></section>
+  </main>
+  <script>
+    const status = document.querySelector('#status')
+    const releases = document.querySelector('#releases')
+    const refresh = document.querySelector('#refresh')
+
+    function formatDate(timestamp) {
+      if (!Number.isSafeInteger(timestamp) || timestamp <= 0) return ''
+      return new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(timestamp * 1000))
+    }
+
+    function render(items) {
+      releases.replaceChildren()
+      if (!items.length) {
+        status.textContent = '暂时没有已发布的更新日志。'
+        status.className = 'empty'
+        return
+      }
+      status.textContent = ''
+      status.className = ''
+      for (const release of items) {
+        const article = document.createElement('article')
+        article.className = 'release'
+        const head = document.createElement('div')
+        head.className = 'release-head'
+        const version = document.createElement('strong')
+        version.className = 'version'
+        version.textContent = `v${release.version}`
+        head.append(version)
+        const date = formatDate(release.publishedAt)
+        if (date) {
+          const dateNode = document.createElement('span')
+          dateNode.className = 'date'
+          dateNode.textContent = date
+          head.append(dateNode)
+        }
+        if (release.mandatory) {
+          const badge = document.createElement('span')
+          badge.className = 'badge'
+          badge.textContent = '必需更新'
+          head.append(badge)
+        }
+        const notes = document.createElement('p')
+        notes.className = 'notes'
+        notes.textContent = release.releaseNotes || '本版本没有填写更新说明。'
+        article.append(head, notes)
+        releases.append(article)
+      }
+    }
+
+    async function load() {
+      refresh.disabled = true
+      status.className = ''
+      status.textContent = '正在加载更新日志…'
+      try {
+        const items = await window.desktopReleaseLog.load()
+        render(Array.isArray(items) ? items : [])
+      } catch (error) {
+        releases.replaceChildren()
+        status.className = 'error'
+        status.textContent = error?.message || '更新日志加载失败，请稍后重试。'
+      } finally {
+        refresh.disabled = false
+      }
+    }
+
+    refresh.addEventListener('click', () => void load())
+    void load()
+  </script>
+</body>
+</html>

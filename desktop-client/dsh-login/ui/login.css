@@ -239,3 +239,7 @@ h2 { margin: 0 0 18px; font-size: 18px; font-weight: 650; }
   .brand-area p { margin-top: 2px; }
   .form-area { padding: 14px 0 20px; }
 }
+
+.login-progress { display:none; margin-top:10px; color:#315b92; font-size:13px; }
+#login-form.is-loading .login-progress { display:block; }
+.login-progress-bar { display:block; width:0; height:3px; transition:width .25s ease; border-radius:2px; background:var(--brand); margin-bottom:6px; }

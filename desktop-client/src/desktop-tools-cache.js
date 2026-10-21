@@ -9,18 +9,23 @@ function createDesktopToolsCache(filePath, maxAgeMs = 24 * 60 * 60 * 1000) {
       return value
     } catch { return null }
   }
-  function write(value) {
+  function write(value, scope) {
+    if (!scope || typeof scope !== 'string') return
     try {
       fs.mkdirSync(path.dirname(filePath), { recursive: true })
       const temp = `${filePath}.${process.pid}.tmp`
-      fs.writeFileSync(temp, JSON.stringify({ savedAt: Date.now(), tools: value.tools }), 'utf8')
+      fs.writeFileSync(temp, JSON.stringify({ savedAt: Date.now(), scope, tools: value.tools }), 'utf8')
       fs.renameSync(temp, filePath)
     } catch { /* cache failure must never block login */ }
   }
   return {
-    readFresh() { const value = read(); return value && Date.now() - value.savedAt <= maxAgeMs ? value : null },
+    readFresh(scope) {
+      const value = read()
+      return value && value.scope === scope && Date.now() - value.savedAt <= maxAgeMs ? value : null
+    },
     readAny: read,
     write,
+    clear() { try { fs.rmSync(filePath, { force: true }) } catch { /* cache failure must never block logout */ } },
   }
 }
 

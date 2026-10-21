@@ -135,6 +135,14 @@ function parseConfig(raw) {
         'apiPaths.passwordResetComplete',
       ),
       desktopTools: validatePath(apiPaths.desktopTools || '/api/user/desktop-tools', 'apiPaths.desktopTools'),
+      clientReleaseLatest: validatePath(
+        apiPaths.clientReleaseLatest || '/api/client-releases/latest',
+        'apiPaths.clientReleaseLatest',
+      ),
+      clientReleaseHistory: validatePath(
+        apiPaths.clientReleaseHistory || '/api/client-releases/history',
+        'apiPaths.clientReleaseHistory',
+      ),
     },
   })
 }

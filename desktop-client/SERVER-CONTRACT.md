@@ -118,7 +118,7 @@ GET /api/user/desktop-tools
       {
         "id": "codex-gpt",
         "name": "GPT / Codex",
-        "api_base_url": "http://127.0.0.1:3000/v1",
+        "api_base_url": "http://gateway.example.com/v1",
         "model": "gpt-5.2",
         "api_key": "sk-example",
         "config_format": "codex-v1",

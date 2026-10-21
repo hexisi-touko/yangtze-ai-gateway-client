@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('desktopAuth', {
   getSavedCredentials: () => ipcRenderer.invoke('auth:get-saved-credentials'),
   clearSavedCredentials: () => ipcRenderer.invoke('auth:clear-saved-credentials'),
   login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
+  onLoginProgress: (callback) => {
+    const listener = (_event, progress) => callback(progress)
+    ipcRenderer.on('auth:login-progress', listener)
+    return () => ipcRenderer.removeListener('auth:login-progress', listener)
+  },
   verifyTwoFactor: (code) => ipcRenderer.invoke('auth:verify-2fa', code),
   submitRegistrationApplication: (application) =>
     ipcRenderer.invoke('auth:submit-registration-application', application),

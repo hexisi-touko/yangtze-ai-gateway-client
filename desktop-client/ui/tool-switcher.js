@@ -234,13 +234,13 @@ function openModal(tool) {
   modalProviderNote.value = `${currentAppMeta.account?.username || '用户'} · 专属账号`
 
   // 官网链接：统一指向当前的 New API 服务端点
-  modalProviderWebsite.value = currentAppMeta.serverUrl || 'http://127.0.0.1:3000'
+  modalProviderWebsite.value = currentAppMeta.serverUrl || '未配置'
 
-  // 核心：真实 API Key 与真实 API 端点
+  // 主进程只向渲染进程提供脱敏 Key；复制操作通过 IPC 在主进程完成。
   modalProviderKey.type = 'text'
-  modalEyeText.textContent = '隐藏'
-  modalProviderKey.value = tool.apiKey || ''
-  modalProviderUrl.value = tool.apiBaseUrl || `${currentAppMeta.serverUrl || 'http://127.0.0.1:3000'}/v1`
+  modalToggleEye.hidden = true
+  modalProviderKey.value = tool.apiKeyMasked || '未配置'
+  modalProviderUrl.value = tool.apiBaseUrl || (currentAppMeta.serverUrl ? `${currentAppMeta.serverUrl}/v1` : '未配置')
   const editable = Array.isArray(tool.availableModels)
   defaultModel = tool.model || ''
   draftModels = [...new Set(tool.availableModels || [])]
@@ -258,7 +258,7 @@ function openModal(tool) {
   // 动态同步高级选项里的 auth.json (JSON) 预览区
   const modalAuthJson = document.querySelector('#modal-auth-json')
   if (modalAuthJson) {
-    const authObj = { OPENAI_API_KEY: tool.apiKey || "sk-your-api-key-here" }
+    const authObj = { OPENAI_API_KEY: tool.apiKeyMasked || '由主进程安全写入' }
     modalAuthJson.value = JSON.stringify(authObj, null, 2)
   }
 
@@ -274,7 +274,7 @@ function openModal(tool) {
       `base_url = "${tool.apiBaseUrl || (currentAppMeta.serverUrl + '/v1')}"`,
       'wire_api = "responses"',
       'requires_openai_auth = false',
-      `experimental_bearer_token = "${tool.apiKey || 'sk-your-api-key-here'}"`
+      `experimental_bearer_token = "${tool.apiKeyMasked || '由主进程安全写入'}"`
     ]
     modalConfigToml.value = tomlLines.join('\n')
   }
@@ -335,7 +335,7 @@ function renderModelSelection() {
       'model_supports_reasoning_summaries = false', '', '[model_providers.custom]',
       `name = ${JSON.stringify(currentViewingTool.providerName || 'API')}`, `base_url = ${JSON.stringify(currentViewingTool.apiBaseUrl)}`,
       'wire_api = "responses"', 'requires_openai_auth = false', 'supports_websockets = false',
-      `experimental_bearer_token = ${JSON.stringify(currentViewingTool.apiKey)}`,
+      `experimental_bearer_token = ${JSON.stringify(currentViewingTool.apiKeyMasked || '由主进程安全写入')}`,
     ].join('\n')
   }
 }
@@ -433,11 +433,10 @@ modalToggleEye.addEventListener('click', () => {
 })
 
 modalCopyKey.addEventListener('click', async () => {
-  const key = modalProviderKey.value
-  if (!key) return
   try {
-    await navigator.clipboard.writeText(key)
-    showMessage('API Key 已成功复制到剪贴板', 'ok')
+    const result = await window.desktopTools.copyApiKey(currentViewingTool?.id)
+    if (!result?.success) throw new Error(result?.message || '复制失败')
+    showMessage(result.message || 'API Key 已成功复制到剪贴板', 'ok')
   } catch {
     showMessage('复制失败', 'error')
   }
@@ -604,19 +603,16 @@ function renderCards(tools, appMeta = {}) {
     const btnQuota = card.querySelector('.btn-view-quota')
     const btnDis = card.querySelector('.btn-card-disable')
 
-    // 查看详情弹窗 (完全还原你的两张表单截图)
+    // 查看供应商配置详情
     btnViewEdit.addEventListener('click', () => {
       openModal(tool)
     })
 
     // 快速复制 Key
     btnCopy.addEventListener('click', async () => {
-      if (!tool.apiKey) {
-        showMessage('暂无可用 API Key', 'error')
-        return
-      }
       try {
-        await navigator.clipboard.writeText(tool.apiKey)
+        const result = await window.desktopTools.copyApiKey(tool.id)
+        if (!result?.success) throw new Error(result?.message || '复制失败')
         showMessage(`已成功复制 ${tool.name} 的 API 密钥`, 'ok')
       } catch {
         showMessage('复制失败', 'error')

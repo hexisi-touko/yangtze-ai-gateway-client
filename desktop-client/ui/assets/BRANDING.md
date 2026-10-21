@@ -4,4 +4,4 @@
 
 ![客户端 Logo](./logo.svg)
 
-修改 `desktop.config.json` 中的 `logoPath` 后，仍需运行 `npm run visual:check` 检查 Electron 窗口中的实际尺寸和裁切效果。
+客户端登录页和工具切换器使用 `logo.svg`。发布时可通过本地桌面配置文件指定登录页 Logo；配置文件不提交到仓库。

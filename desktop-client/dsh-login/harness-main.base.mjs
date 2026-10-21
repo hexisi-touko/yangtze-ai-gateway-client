@@ -3736,7 +3736,7 @@ var DesktopProjectManager = class {
 			this.recover();
 			const target = releaseFile(seedDir);
 			if (target.version !== electronVersion) throw new Error(`本地工作区： seed ${target.version} does not match Electron ${electronVersion}`);
-			if (existsSync(this.paths.profile) && this.releaseVersion() === target.version && this.dshVersion() === target.version && this.installedPackageVersion("@deepseek-ai/dsh-desktop-host") === target.version) {
+			if (existsSync(this.paths.profile) && (() => { try { return this.releaseVersion() === target.version && this.dshVersion() === target.version && this.installedPackageVersion("@deepseek-ai/dsh-desktop-host") === target.version; } catch { return false; } })()) {
 				verifyDesktopCorePackageSet(this.paths.profile, target.version);
 				return false;
 			}
@@ -4943,7 +4943,7 @@ async function main() {
  { role: "quit" }
 		]
 	}]));
-	for(const action of ['state','refresh','select','check','balance','usage']) ipcMain.handle('lab-models:'+action, async (event,...args)=>{assertDesktopSender(event,['app']);if(!authenticated||!modelBridge||event.sender!==mainWindow?.webContents)throw new Error('请先登录');if(action==='state')return modelBridge.state();const result=await modelBridge[action](...args);return result;}); const createMainWindow = () => {
+ for(const action of ['state','refresh','select','check','balance','usage','dashboard','launch','terminal']) ipcMain.handle('lab-models:'+action, async (event,...args)=>{assertDesktopSender(event,['app']);if(!authenticated||!modelBridge||event.sender!==mainWindow?.webContents)throw new Error('请先登录');if(action==='state')return modelBridge.state();const result=await modelBridge[action](...args);return result;}); const createMainWindow = () => {
 		const window = createWindow(appPreload);
 		mainWindow = window;
 		window.once("ready-to-show", () => {

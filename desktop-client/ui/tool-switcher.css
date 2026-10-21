@@ -1,7 +1,6 @@
 /* =========================================================
    AI 终端管理中心 - 样式表
    取消侧边栏分区，像 CC-Switch 原版一样卡片平铺
-   100% 对齐截图一与截图二、三
    ========================================================= */
 
 :root {
@@ -683,7 +682,7 @@ html[data-theme="dark"] .message-banner.error {
 }
 
 /* =========================================================================
-   弹窗样式 (Modal) - 严格按照截图二与截图三的表单
+   弹窗样式 (Modal)
    ========================================================================= */
 .modal-backdrop {
   position: fixed;
@@ -975,7 +974,7 @@ html[data-theme="dark"] .message-banner.error {
   height: 16px;
 }
 
-/* 完整 URL 开关模拟 (截图二) */
+/* 完整 URL 开关模拟 */
 .url-switch-group {
   display: flex;
   align-items: center;
@@ -1049,7 +1048,7 @@ html[data-theme="dark"] .message-banner.error {
   color: var(--blue-primary);
 }
 
-/* 黄色提示框 (截图二 💡 填写兼容 OpenAI Response...) */
+/* 黄色提示框 */
 .yellow-notice-alert {
   display: flex;
   align-items: center;
@@ -1067,7 +1066,7 @@ html[data-theme="dark"] .message-banner.error {
   font-size: 14px;
 }
 
-/* 高级选项卡片 (截图三) */
+/* 高级选项卡片 */
 .advanced-card {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
